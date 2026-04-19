@@ -86,7 +86,7 @@ export default function MyReservationsScreen() {
   if (loading) {
     return (
       <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#1a5c2e" />
+        <ActivityIndicator size="large" color="#2563eb" />
       </View>
     );
   }
@@ -126,7 +126,7 @@ export default function MyReservationsScreen() {
               </View>
             ) : (
               <View className="bg-green-100 rounded-full px-2 py-0.5">
-                <Text className="text-green-700 text-xs font-semibold">Ativo</Text>
+                <Text className="text-blue-700 text-xs font-semibold">Ativo</Text>
               </View>
             )}
 
@@ -153,7 +153,7 @@ export default function MyReservationsScreen() {
     <View className="flex-1 bg-gray-50">
       <View className="bg-primary px-5 pt-14 pb-5">
         <Text className="text-white text-xl font-bold">Minhas Reservas</Text>
-        <Text className="text-green-200 text-sm mt-0.5">
+        <Text className="text-blue-200 text-sm mt-0.5">
           {upcoming.length} ativa{upcoming.length !== 1 ? "s" : ""}
         </Text>
       </View>

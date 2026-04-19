@@ -75,7 +75,7 @@ export default function ProfileScreen() {
         </TouchableOpacity>
 
         <Text className="text-white text-xl font-bold mt-3">{teacher?.name}</Text>
-        <Text className="text-green-200 text-sm">{teacher?.email}</Text>
+        <Text className="text-blue-200 text-sm">{teacher?.email}</Text>
       </View>
 
       <ScrollView className="flex-1 p-4">

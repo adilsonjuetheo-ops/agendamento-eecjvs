@@ -75,11 +75,11 @@ export default function RegisterScreen() {
         <View className="flex-1 px-6 py-12">
           {/* Header */}
           <TouchableOpacity onPress={() => router.back()} className="mb-4">
-            <Text className="text-green-200 text-sm">← Voltar</Text>
+            <Text className="text-blue-200 text-sm">← Voltar</Text>
           </TouchableOpacity>
 
           <Text className="text-white text-2xl font-bold mb-2">Cadastro</Text>
-          <Text className="text-green-200 text-sm mb-6">
+          <Text className="text-blue-200 text-sm mb-6">
             Crie sua conta com email institucional
           </Text>
 

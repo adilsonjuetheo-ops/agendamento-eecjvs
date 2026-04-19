@@ -100,7 +100,7 @@ export default function HomeScreen() {
     markedDates[selectedDate] = {
       ...markedDates[selectedDate],
       selected: true,
-      selectedColor: "#1a5c2e",
+      selectedColor: "#2563eb",
     };
   }
 
@@ -115,7 +115,7 @@ export default function HomeScreen() {
   if (loading) {
     return (
       <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#1a5c2e" />
+        <ActivityIndicator size="large" color="#2563eb" />
       </View>
     );
   }
@@ -215,10 +215,10 @@ export default function HomeScreen() {
             markedDates={markedDates}
             markingType="multi-dot"
             theme={{
-              selectedDayBackgroundColor: "#1a5c2e",
-              todayTextColor: "#1a5c2e",
-              arrowColor: "#1a5c2e",
-              monthTextColor: "#1a5c2e",
+              selectedDayBackgroundColor: "#2563eb",
+              todayTextColor: "#2563eb",
+              arrowColor: "#2563eb",
+              monthTextColor: "#2563eb",
               textDayFontSize: 14,
               calendarBackground: "#ffffff",
             }}

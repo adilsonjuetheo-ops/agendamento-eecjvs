@@ -60,7 +60,7 @@ export default function LoginScreen() {
             <Text className="text-white text-2xl font-bold mt-3">
               Agendamento EECJVS
             </Text>
-            <Text className="text-green-200 text-sm mt-1">
+            <Text className="text-blue-200 text-sm mt-1">
               E.E. Cel. José Venâncio de Souza
             </Text>
           </View>
@@ -127,7 +127,7 @@ export default function LoginScreen() {
           {/* Link Admin */}
           <Link href="/admin/login" asChild>
             <TouchableOpacity className="mt-6 items-center">
-              <Text className="text-green-200 text-xs">
+              <Text className="text-blue-200 text-xs">
                 Acesso Administrativo
               </Text>
             </TouchableOpacity>

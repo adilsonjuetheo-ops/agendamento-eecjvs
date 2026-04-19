@@ -59,13 +59,13 @@ export default function ForgotPasswordScreen() {
       >
         <View className="flex-1 px-6 py-12">
           <TouchableOpacity onPress={() => router.back()} className="mb-4">
-            <Text className="text-green-200 text-sm">← Voltar</Text>
+            <Text className="text-blue-200 text-sm">← Voltar</Text>
           </TouchableOpacity>
 
           <Text className="text-white text-2xl font-bold mb-2">
             Redefinir Senha
           </Text>
-          <Text className="text-green-200 text-sm mb-6">
+          <Text className="text-blue-200 text-sm mb-6">
             Informe seu MASP para redefinir a senha
           </Text>
 

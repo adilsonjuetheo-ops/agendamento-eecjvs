@@ -9,7 +9,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1a5c2e"
+      "backgroundColor": "#2563eb"
     },
     "ios": {
       "supportsTablet": false,
@@ -22,7 +22,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1a5c2e"
+        "backgroundColor": "#2563eb"
       },
       "package": "br.edu.eecjvs.agendamento",
       "permissions": [
@@ -45,7 +45,7 @@
         "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",
-          "color": "#1a5c2e"
+          "color": "#2563eb"
         }
       ]
     ],
