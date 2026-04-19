@@ -26,7 +26,7 @@ const ROOM_COLORS: Record<string, string> = {
 
 export default function HomeScreen() {
   const teacher = useAuthStore((s) => s.teacher);
-  const { reservations, specialDates, isOffline, refresh } = useOfflineCache();
+  const { reservations, specialDates, isOffline, loading, refresh } = useOfflineCache();
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [dayReservations, setDayReservations] = useState<any[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -37,8 +37,6 @@ export default function HomeScreen() {
   useEffect(() => {
     registerForPushNotificationsAsync();
   }, []);
-
-  const loading = reservations.length === 0 && specialDates.length === 0;
 
   async function onRefresh() {
     setRefreshing(true);

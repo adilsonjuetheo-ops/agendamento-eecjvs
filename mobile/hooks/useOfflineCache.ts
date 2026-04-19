@@ -16,6 +16,7 @@ interface CachedData {
   specialDates: SpecialDate[];
   isOffline: boolean;
   cachedAt: Date | null;
+  loading: boolean;
 }
 
 export function useOfflineCache(): CachedData & { refresh: () => Promise<void> } {
@@ -24,6 +25,7 @@ export function useOfflineCache(): CachedData & { refresh: () => Promise<void> }
     specialDates: [],
     isOffline: false,
     cachedAt: null,
+    loading: true,
   });
 
   async function loadFromCache() {
@@ -56,7 +58,7 @@ export function useOfflineCache(): CachedData & { refresh: () => Promise<void> }
 
     if (!netState.isConnected) {
       const cached = await loadFromCache();
-      setData({ ...cached, isOffline: true });
+      setData({ ...cached, isOffline: true, loading: false });
       return;
     }
 
@@ -71,11 +73,11 @@ export function useOfflineCache(): CachedData & { refresh: () => Promise<void> }
         specialDates: sdRes.data,
         isOffline: false,
         cachedAt: new Date(),
+        loading: false,
       });
     } catch {
-      // falha na rede mesmo estando "conectado" — usa cache
       const cached = await loadFromCache();
-      setData({ ...cached, isOffline: true });
+      setData({ ...cached, isOffline: true, loading: false });
     }
   }
 
