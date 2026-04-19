@@ -1,0 +1,19 @@
+# Dependências
+**/node_modules/
+
+# Env files (nunca commitar)
+**/.env
+!**/.env.example
+
+# Build
+**/dist/
+**/.expo/
+**/web-build/
+
+# EAS
+android/
+ios/
+
+# OS
+.DS_Store
+Thumbs.db

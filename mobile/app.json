@@ -1,0 +1,57 @@
+{
+  "expo": {
+    "name": "Agendamento EECJVS",
+    "slug": "agendamento-eecjvs",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1a5c2e"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "br.edu.eecjvs.agendamento",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Para foto de perfil",
+        "NSPhotoLibraryUsageDescription": "Para selecionar foto de perfil"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1a5c2e"
+      },
+      "package": "br.edu.eecjvs.agendamento",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "RECEIVE_BOOT_COMPLETED",
+        "SCHEDULE_EXACT_ALARM",
+        "VIBRATE"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#1a5c2e"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "scheme": "agendamento-eecjvs"
+  }
+}
