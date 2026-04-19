@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Stack } from "expo-router";
+import { Stack, router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "react-native";
 import { useAuthStore } from "../store/authStore";
@@ -7,11 +7,17 @@ import "../global.css";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const loadStoredAuth = useAuthStore((s) => s.loadStoredAuth);
+  const { loadStoredAuth, isAuthenticated, isLoading } = useAuthStore();
 
   useEffect(() => {
     loadStoredAuth();
   }, []);
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.replace("/(auth)/login");
+    }
+  }, [isAuthenticated, isLoading]);
 
   return (
     <>

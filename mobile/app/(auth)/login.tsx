@@ -9,6 +9,7 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { Link, router } from "expo-router";
 import { useAuthStore } from "../../store/authStore";
@@ -56,8 +57,12 @@ export default function LoginScreen() {
         <View className="flex-1 justify-center px-6 py-12">
           {/* Header */}
           <View className="items-center mb-10">
-            <Text className="text-white text-4xl font-bold">📅</Text>
-            <Text className="text-white text-2xl font-bold mt-3">
+            <Image
+              source={require("../../assets/icon.png")}
+              className="w-24 h-24 rounded-2xl"
+              resizeMode="contain"
+            />
+            <Text className="text-white text-2xl font-bold mt-4">
               Agendamento EECJVS
             </Text>
             <Text className="text-blue-200 text-sm mt-1">
