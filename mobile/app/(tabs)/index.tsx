@@ -13,6 +13,8 @@ import { Calendar, DateData } from "react-native-calendars";
 import { format, parseISO, isToday, startOfWeek, endOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { router } from "expo-router";
+import { useFocusEffect } from "expo-router";
+import { useCallback } from "react";
 import { useAuthStore } from "../../store/authStore";
 import { useOfflineCache } from "../../hooks/useOfflineCache";
 import { useNotificationListener, registerForPushNotificationsAsync } from "../../hooks/useNotifications";
@@ -44,6 +46,12 @@ export default function HomeScreen() {
   useEffect(() => {
     registerForPushNotificationsAsync();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [])
+  );
 
   async function onRefresh() {
     setRefreshing(true);
