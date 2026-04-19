@@ -10,7 +10,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { Calendar, DateData } from "react-native-calendars";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, isToday, startOfWeek, endOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { router } from "expo-router";
 import { useAuthStore } from "../../store/authStore";
@@ -22,6 +22,13 @@ const ROOM_COLORS: Record<string, string> = {
   "Laboratório de Ciências": "#8b5cf6",
   "Quadra Poliesportiva": "#f59e0b",
   "Biblioteca": "#ec4899",
+};
+
+const ROOM_ICONS: Record<string, string> = {
+  "Sala de Informática": "💻",
+  "Laboratório de Ciências": "🔬",
+  "Quadra Poliesportiva": "⚽",
+  "Biblioteca": "📚",
 };
 
 export default function HomeScreen() {
@@ -44,23 +51,39 @@ export default function HomeScreen() {
     setRefreshing(false);
   }
 
+  const today = format(new Date(), "yyyy-MM-dd");
+
+  const todayReservations = reservations.filter((r) =>
+    r.startTime.startsWith(today)
+  );
+
+  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
+  const myWeekReservations = reservations.filter((r) => {
+    const d = parseISO(r.startTime);
+    return (
+      r.teacherId === teacher?.id &&
+      d >= weekStart &&
+      d <= weekEnd
+    );
+  });
+
+  const myReservations = reservations
+    .filter((r) => r.teacherId === teacher?.id)
+    .sort((a, b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime())
+    .slice(0, 3);
+
   // Monta marcações do calendário
   const markedDates: Record<string, any> = {};
 
-  // Reservas
   reservations.forEach((r) => {
     const dateKey = r.startTime.split("T")[0];
-    if (!markedDates[dateKey]) {
-      markedDates[dateKey] = { dots: [] };
-    }
+    if (!markedDates[dateKey]) markedDates[dateKey] = { dots: [] };
     const color = ROOM_COLORS[r.room] || "#6b7280";
     const exists = markedDates[dateKey].dots.find((d: any) => d.color === color);
-    if (!exists) {
-      markedDates[dateKey].dots.push({ color, key: r.room });
-    }
+    if (!exists) markedDates[dateKey].dots.push({ color, key: r.room });
   });
 
-  // Datas especiais
   specialDates.forEach((sd) => {
     const blocking = ["feriado", "ferias"].includes(sd.type);
     markedDates[sd.date] = {
@@ -73,7 +96,6 @@ export default function HomeScreen() {
     };
   });
 
-  // Dia selecionado
   if (selectedDate) {
     markedDates[selectedDate] = {
       ...markedDates[selectedDate],
@@ -85,7 +107,6 @@ export default function HomeScreen() {
   function handleDayPress(day: DateData) {
     const dateStr = day.dateString;
     setSelectedDate(dateStr);
-
     const dayRes = reservations.filter((r) => r.startTime.startsWith(dateStr));
     setDayReservations(dayRes);
     setModalVisible(true);
@@ -99,73 +120,172 @@ export default function HomeScreen() {
     );
   }
 
+  const firstName = teacher?.name?.split(" ")[0] ?? "";
+
   return (
     <View className="flex-1 bg-gray-50">
       {/* Header */}
-      <View className="bg-primary px-5 pt-14 pb-5">
-        <View className="flex-row items-center justify-between">
+      <View className="bg-primary px-5 pt-14 pb-6">
+        <View className="flex-row items-center justify-between mb-4">
           <View>
             <Text className="text-green-200 text-sm">Olá,</Text>
-            <Text className="text-white text-xl font-bold">{teacher?.name}</Text>
+            <Text className="text-white text-2xl font-bold">{firstName}</Text>
           </View>
-          {isOffline && (
-            <View className="bg-yellow-500 rounded-full px-3 py-1">
-              <Text className="text-white text-xs font-semibold">Offline</Text>
-            </View>
-          )}
+          <View className="items-end">
+            {isOffline && (
+              <View className="bg-yellow-500 rounded-full px-3 py-1 mb-1">
+                <Text className="text-white text-xs font-semibold">Offline</Text>
+              </View>
+            )}
+            <Text className="text-green-200 text-xs">
+              {format(new Date(), "EEEE, d 'de' MMM", { locale: ptBR })}
+            </Text>
+          </View>
+        </View>
+
+        {/* Cards de resumo */}
+        <View className="flex-row gap-3">
+          <View className="flex-1 bg-white/15 rounded-xl p-3">
+            <Text className="text-green-100 text-xs mb-1">Hoje</Text>
+            <Text className="text-white text-2xl font-bold">{todayReservations.length}</Text>
+            <Text className="text-green-200 text-xs">reserva{todayReservations.length !== 1 ? "s" : ""}</Text>
+          </View>
+          <View className="flex-1 bg-white/15 rounded-xl p-3">
+            <Text className="text-green-100 text-xs mb-1">Esta semana</Text>
+            <Text className="text-white text-2xl font-bold">{myWeekReservations.length}</Text>
+            <Text className="text-green-200 text-xs">sua{myWeekReservations.length !== 1 ? "s" : ""}</Text>
+          </View>
+          <View className="flex-1 bg-white/15 rounded-xl p-3">
+            <Text className="text-green-100 text-xs mb-1">Total</Text>
+            <Text className="text-white text-2xl font-bold">{reservations.filter(r => r.teacherId === teacher?.id).length}</Text>
+            <Text className="text-green-200 text-xs">seus</Text>
+          </View>
         </View>
       </View>
 
       <ScrollView
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        showsVerticalScrollIndicator={false}
       >
-        {/* Calendário */}
-        <Calendar
-          onDayPress={handleDayPress}
-          markedDates={markedDates}
-          markingType="multi-dot"
-          theme={{
-            selectedDayBackgroundColor: "#1a5c2e",
-            todayTextColor: "#1a5c2e",
-            arrowColor: "#1a5c2e",
-            monthTextColor: "#1a5c2e",
-            textDayFontSize: 14,
-          }}
-        />
-
-        {/* Legenda */}
-        <View className="mx-4 mt-3 bg-white rounded-xl p-4 shadow-sm">
-          <Text className="text-gray-600 text-xs font-semibold mb-2">LEGENDA</Text>
-          <View className="flex-row flex-wrap gap-2">
-            {Object.entries(ROOM_COLORS).map(([room, color]) => (
-              <View key={room} className="flex-row items-center mr-3 mb-1">
-                <View
-                  className="w-3 h-3 rounded-full mr-1"
-                  style={{ backgroundColor: color }}
-                />
-                <Text className="text-gray-600 text-xs">{room}</Text>
+        {/* Reservas de hoje */}
+        {todayReservations.length > 0 && (
+          <View className="mx-4 mt-4">
+            <Text className="text-gray-700 font-semibold text-sm mb-2">Hoje no espaço escolar</Text>
+            {todayReservations.map((r) => (
+              <View
+                key={r.id}
+                className="bg-white rounded-xl p-3 mb-2 flex-row items-center shadow-sm"
+                style={{ borderLeftWidth: 4, borderLeftColor: ROOM_COLORS[r.room] || "#6b7280" }}
+              >
+                <Text className="text-2xl mr-3">{ROOM_ICONS[r.room] || "📌"}</Text>
+                <View className="flex-1">
+                  <Text className="text-gray-800 font-semibold text-sm">{r.room}</Text>
+                  <Text className="text-gray-500 text-xs">
+                    {format(parseISO(r.startTime), "HH:mm")} – {format(parseISO(r.endTime), "HH:mm")} • {r.teacherName}
+                  </Text>
+                </View>
               </View>
             ))}
           </View>
-          <View className="flex-row items-center mt-2">
-            <View className="w-3 h-3 rounded bg-red-100 mr-1" />
-            <Text className="text-gray-500 text-xs mr-3">Bloqueado</Text>
-            <View className="w-3 h-3 rounded bg-yellow-100 mr-1" />
-            <Text className="text-gray-500 text-xs">Ponto facultativo</Text>
+        )}
+
+        {/* Atalhos rápidos */}
+        <View className="mx-4 mt-4">
+          <Text className="text-gray-700 font-semibold text-sm mb-2">Agendar espaço</Text>
+          <View className="flex-row flex-wrap gap-2">
+            {Object.entries(ROOM_ICONS).map(([room, icon]) => (
+              <TouchableOpacity
+                key={room}
+                className="bg-white rounded-xl px-3 py-3 items-center shadow-sm"
+                style={{ width: "48%", borderTopWidth: 3, borderTopColor: ROOM_COLORS[room] }}
+                onPress={() => router.push("/(tabs)/new-reservation")}
+              >
+                <Text className="text-2xl mb-1">{icon}</Text>
+                <Text className="text-gray-700 text-xs text-center font-medium">{room}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
 
-        {/* Botão agendar */}
-        <TouchableOpacity
-          className="mx-4 mt-4 mb-6 bg-primary rounded-xl py-4 items-center"
-          onPress={() => router.push("/(tabs)/new-reservation")}
-        >
-          <Text className="text-white font-semibold text-base">
-            + Novo agendamento
-          </Text>
-        </TouchableOpacity>
+        {/* Calendário */}
+        <View className="mx-4 mt-4 bg-white rounded-2xl shadow-sm overflow-hidden">
+          <Text className="text-gray-700 font-semibold text-sm px-4 pt-4 pb-2">Calendário de reservas</Text>
+          <Calendar
+            onDayPress={handleDayPress}
+            markedDates={markedDates}
+            markingType="multi-dot"
+            theme={{
+              selectedDayBackgroundColor: "#1a5c2e",
+              todayTextColor: "#1a5c2e",
+              arrowColor: "#1a5c2e",
+              monthTextColor: "#1a5c2e",
+              textDayFontSize: 14,
+              calendarBackground: "#ffffff",
+            }}
+          />
+          {/* Legenda */}
+          <View className="px-4 pb-4 pt-2 border-t border-gray-100">
+            <View className="flex-row flex-wrap">
+              {Object.entries(ROOM_COLORS).map(([room, color]) => (
+                <View key={room} className="flex-row items-center mr-3 mb-1">
+                  <View className="w-2 h-2 rounded-full mr-1" style={{ backgroundColor: color }} />
+                  <Text className="text-gray-500 text-xs">{room}</Text>
+                </View>
+              ))}
+            </View>
+            <View className="flex-row items-center mt-1">
+              <View className="w-2 h-2 rounded mr-1 bg-red-200" />
+              <Text className="text-gray-400 text-xs mr-3">Bloqueado</Text>
+              <View className="w-2 h-2 rounded mr-1 bg-yellow-200" />
+              <Text className="text-gray-400 text-xs">Ponto facultativo</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Minhas reservas recentes */}
+        <View className="mx-4 mt-4 mb-6">
+          <View className="flex-row items-center justify-between mb-2">
+            <Text className="text-gray-700 font-semibold text-sm">Minhas reservas recentes</Text>
+            <TouchableOpacity onPress={() => router.push("/(tabs)/my-reservations")}>
+              <Text className="text-primary text-xs font-semibold">Ver todas</Text>
+            </TouchableOpacity>
+          </View>
+          {myReservations.length === 0 ? (
+            <View className="bg-white rounded-xl p-6 items-center shadow-sm">
+              <Text className="text-gray-400 text-sm">Nenhuma reserva ainda</Text>
+              <TouchableOpacity
+                className="mt-3 bg-primary rounded-lg px-5 py-2"
+                onPress={() => router.push("/(tabs)/new-reservation")}
+              >
+                <Text className="text-white text-sm font-semibold">Fazer agendamento</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            myReservations.map((r) => (
+              <View
+                key={r.id}
+                className="bg-white rounded-xl p-3 mb-2 shadow-sm"
+                style={{ borderLeftWidth: 4, borderLeftColor: ROOM_COLORS[r.room] || "#6b7280" }}
+              >
+                <View className="flex-row items-center">
+                  <Text className="text-xl mr-2">{ROOM_ICONS[r.room] || "📌"}</Text>
+                  <View className="flex-1">
+                    <Text className="text-gray-800 font-semibold text-sm">{r.room}</Text>
+                    <Text className="text-gray-500 text-xs">
+                      {format(parseISO(r.startTime), "dd/MM/yyyy")} • {format(parseISO(r.startTime), "HH:mm")} – {format(parseISO(r.endTime), "HH:mm")}
+                    </Text>
+                    <Text className="text-gray-400 text-xs">{r.subject}</Text>
+                  </View>
+                  {r.status === "cancelado" && (
+                    <View className="bg-red-100 rounded-full px-2 py-0.5">
+                      <Text className="text-red-600 text-xs">Cancelado</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            ))
+          )}
+        </View>
       </ScrollView>
 
       {/* Modal detalhe do dia */}
@@ -188,7 +308,6 @@ export default function HomeScreen() {
                 : ""}
             </Text>
 
-            {/* Indicador data especial */}
             {selectedDate &&
               specialDates
                 .filter((sd) => sd.date === selectedDate)
@@ -206,9 +325,7 @@ export default function HomeScreen() {
 
             {dayReservations.length === 0 ? (
               <View className="items-center py-8">
-                <Text className="text-gray-500 text-base">
-                  Nenhuma reserva neste dia
-                </Text>
+                <Text className="text-gray-500 text-base">Nenhuma reserva neste dia</Text>
                 <TouchableOpacity
                   className="mt-4 bg-primary rounded-lg px-6 py-3"
                   onPress={() => {
@@ -224,18 +341,20 @@ export default function HomeScreen() {
                 data={dayReservations}
                 keyExtractor={(item) => String(item.id)}
                 renderItem={({ item }) => (
-                  <View className="bg-gray-50 rounded-xl p-3 mb-2 border-l-4"
-                    style={{ borderLeftColor: ROOM_COLORS[item.room] || "#6b7280" }}>
-                    <Text className="text-gray-800 font-semibold text-sm">
-                      {item.room}
-                    </Text>
-                    <Text className="text-gray-600 text-xs mt-0.5">
-                      {format(parseISO(item.startTime), "HH:mm")} –{" "}
-                      {format(parseISO(item.endTime), "HH:mm")}
-                    </Text>
-                    <Text className="text-gray-500 text-xs">
-                      {item.teacherName} • {item.subject}
-                    </Text>
+                  <View
+                    className="bg-gray-50 rounded-xl p-3 mb-2 border-l-4"
+                    style={{ borderLeftColor: ROOM_COLORS[item.room] || "#6b7280" }}
+                  >
+                    <View className="flex-row items-center">
+                      <Text className="text-xl mr-2">{ROOM_ICONS[item.room] || "📌"}</Text>
+                      <View className="flex-1">
+                        <Text className="text-gray-800 font-semibold text-sm">{item.room}</Text>
+                        <Text className="text-gray-600 text-xs mt-0.5">
+                          {format(parseISO(item.startTime), "HH:mm")} – {format(parseISO(item.endTime), "HH:mm")}
+                        </Text>
+                        <Text className="text-gray-500 text-xs">{item.teacherName} • {item.subject}</Text>
+                      </View>
+                    </View>
                   </View>
                 )}
               />
