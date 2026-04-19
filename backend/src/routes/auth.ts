@@ -73,7 +73,7 @@ router.post("/register", async (req: Request, res: Response) => {
   const token = jwt.sign(
     { teacherId: teacher.id, email: teacher.email, role: "teacher" },
     process.env.JWT_SECRET!,
-    { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
+    { expiresIn: "7d" }
   );
 
   res.status(201).json({ token, teacher });
@@ -108,7 +108,7 @@ router.post("/login", async (req: Request, res: Response) => {
   const token = jwt.sign(
     { teacherId: teacher.id, email: teacher.email, role: "teacher" },
     process.env.JWT_SECRET!,
-    { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
+    { expiresIn: "7d" }
   );
 
   res.json({
