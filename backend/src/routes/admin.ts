@@ -18,14 +18,14 @@ router.post("/login", async (req: Request, res: Response) => {
     return;
   }
 
-  const admin1Email = process.env.ADMIN_1_EMAIL!;
-  const admin2Email = process.env.ADMIN_2_EMAIL!;
-  const admin1Hash = process.env.ADMIN_1_PASSWORD_HASH!;
-  const admin2Hash = process.env.ADMIN_2_PASSWORD_HASH!;
+  const admin1Email = process.env.ADMIN_1_EMAIL?.trim();
+  const admin2Email = process.env.ADMIN_2_EMAIL?.trim();
+  const admin1Hash = process.env.ADMIN_1_PASSWORD_HASH?.trim();
+  const admin2Hash = process.env.ADMIN_2_PASSWORD_HASH?.trim();
 
   let hash: string | null = null;
-  if (email === admin1Email) hash = admin1Hash;
-  else if (email === admin2Email) hash = admin2Hash;
+  if (email.trim() === admin1Email) hash = admin1Hash ?? null;
+  else if (email.trim() === admin2Email) hash = admin2Hash ?? null;
 
   if (!hash) {
     res.status(401).json({ error: "Credenciais inválidas" });
