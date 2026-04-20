@@ -27,7 +27,7 @@ app.use("/api/admin", adminRoutes);
 // Painel web admin (servido em /admin)
 const webDist = path.join(__dirname, "../../web/dist");
 app.use("/admin", express.static(webDist));
-app.get("/admin/*", (_req, res) => {
+app.get(["/admin", "/admin/*"], (_req, res) => {
   res.sendFile(path.join(webDist, "index.html"));
 });
 
