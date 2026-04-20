@@ -1,4 +1,4 @@
-import { useState, FormEvent } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../auth";
@@ -11,7 +11,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: { preventDefault(): void }) {
     e.preventDefault();
     setError("");
     setLoading(true);
@@ -31,9 +31,12 @@ export default function Login() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">
-            🏫
-          </div>
+          <img
+            src="/admin/logo.png"
+            alt="Logo da escola"
+            className="w-20 h-20 rounded-2xl object-contain mx-auto mb-4"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+          />
           <h1 className="text-white text-2xl font-bold">Painel Administrativo</h1>
           <p className="text-gray-400 text-sm mt-1">E.E. Cel. José Venâncio de Souza</p>
         </div>

@@ -323,9 +323,27 @@ export default function Calendar() {
               </div>
 
               <div>
-                <label className="block text-sm text-gray-600 mb-1">Cole o conteúdo CSV aqui</label>
+                <label className="block text-sm text-gray-600 mb-1">Arquivo CSV</label>
+                <input
+                  type="file"
+                  accept=".csv,text/csv,text/plain"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                      setCsvText(ev.target?.result as string ?? "");
+                      setCsvPreview([]);
+                    };
+                    reader.readAsText(file, "UTF-8");
+                  }}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Ou cole o conteúdo CSV aqui</label>
                 <textarea
-                  rows={8}
+                  rows={6}
                   value={csvText}
                   onChange={(e) => { setCsvText(e.target.value); setCsvPreview([]); }}
                   className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"

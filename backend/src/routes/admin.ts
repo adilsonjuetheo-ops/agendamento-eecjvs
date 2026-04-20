@@ -193,6 +193,72 @@ router.get("/teachers", adminAuthMiddleware, async (_req: AdminRequest, res: Res
   res.json(all);
 });
 
+// POST /api/admin/teachers — cadastrar novo professor
+router.post("/teachers", adminAuthMiddleware, async (req: AdminRequest, res: Response) => {
+  const schema = z.object({
+    name:      z.string().min(2),
+    email:     z.string().email(),
+    matricula: z.string().min(3),
+    subjects:  z.string().min(1),
+    password:  z.string().min(6),
+  });
+
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.errors[0].message });
+    return;
+  }
+
+  const { name, email, matricula, subjects, password } = parsed.data;
+
+  const existing = await db
+    .select({ id: teachers.id })
+    .from(teachers)
+    .where(eq(teachers.email, email))
+    .limit(1);
+
+  if (existing.length > 0) {
+    res.status(409).json({ error: "E-mail já cadastrado" });
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+  const [created] = await db
+    .insert(teachers)
+    .values({ name, email, matricula, subjects, passwordHash })
+    .returning({
+      id: teachers.id,
+      name: teachers.name,
+      email: teachers.email,
+      matricula: teachers.matricula,
+      subjects: teachers.subjects,
+      createdAt: teachers.createdAt,
+    });
+
+  res.status(201).json(created);
+});
+
+// DELETE /api/admin/teachers/:id — remover professor
+router.delete("/teachers/:id", adminAuthMiddleware, async (req: AdminRequest, res: Response) => {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) {
+    res.status(400).json({ error: "ID inválido" });
+    return;
+  }
+
+  const [deleted] = await db
+    .delete(teachers)
+    .where(eq(teachers.id, id))
+    .returning({ id: teachers.id });
+
+  if (!deleted) {
+    res.status(404).json({ error: "Professor não encontrado" });
+    return;
+  }
+
+  res.json({ message: "Professor removido", id: deleted.id });
+});
+
 // GET /api/admin/reports/rooms
 router.get("/reports/rooms", adminAuthMiddleware, async (_req: AdminRequest, res: Response) => {
   const now = new Date();

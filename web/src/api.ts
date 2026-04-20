@@ -121,6 +121,12 @@ export const api = {
   // Teachers
   getTeachers: () => request<Teacher[]>("GET", "/api/admin/teachers"),
 
+  createTeacher: (data: { name: string; email: string; matricula: string; subjects: string; password: string }) =>
+    request<Teacher>("POST", "/api/admin/teachers", data),
+
+  deleteTeacher: (id: number) =>
+    request<void>("DELETE", `/api/admin/teachers/${id}`),
+
   // Calendar
   getCalendar: () => request<SpecialDate[]>("GET", "/api/admin/special-dates"),
 
