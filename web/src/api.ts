@@ -73,10 +73,15 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   });
 
   if (res.status === 401) {
-    localStorage.removeItem("admin_token");
-    localStorage.removeItem("admin_email");
-    window.location.href = "/admin/login";
-    throw new Error("Não autorizado");
+    const data = await res.json().catch(() => ({}));
+    const msg = (data as { error?: string }).error || "Credenciais inválidas";
+    // Só redireciona se havia token (sessão expirada), não no login em si
+    if (localStorage.getItem("admin_token")) {
+      localStorage.removeItem("admin_token");
+      localStorage.removeItem("admin_email");
+      window.location.href = "/admin/login";
+    }
+    throw new Error(msg);
   }
 
   if (!res.ok) {
