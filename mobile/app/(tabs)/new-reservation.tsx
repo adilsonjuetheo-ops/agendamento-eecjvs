@@ -13,7 +13,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { scheduleReservationReminder } from "../../hooks/useNotifications";
-import { format, parseISO } from "date-fns";
+import { format, isBefore, isToday, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { reservationsApi } from "../../services/api";
 
@@ -93,10 +93,19 @@ export default function NewReservationScreen() {
     }
   }
 
+  function isSlotPast(slot: { start: string; end: string }): boolean {
+    if (!isToday(date)) return false;
+    return isBefore(buildDateTime(date, slot.start), new Date());
+  }
+
   async function handleSubmit() {
     if (!room) { Alert.alert("Erro", "Selecione um espaço"); return; }
     if (!selectedSlot) { Alert.alert("Erro", "Selecione um horário"); return; }
     if (!subject.trim()) { Alert.alert("Erro", "Informe a disciplina / turma"); return; }
+    if (isBefore(buildDateTime(date, selectedSlot.start), new Date())) {
+      Alert.alert("Erro", "Não é possível reservar um horário que já passou.");
+      return;
+    }
 
     setLoading(true);
     try {
@@ -206,16 +215,30 @@ export default function NewReservationScreen() {
               <View className="flex-row flex-wrap gap-2">
                 {slots.map((slot) => {
                   const isSelected = selectedSlot?.start === slot.start && selectedSlot?.end === slot.end;
+                  const isPastSlot = isSlotPast(slot);
                   return (
                     <TouchableOpacity
                       key={slot.label}
                       className={`px-3 py-2 rounded-xl border ${
-                        isSelected ? "bg-primary border-primary" : "border-gray-200 bg-gray-50"
+                        isPastSlot
+                          ? "border-gray-100 bg-gray-50 opacity-40"
+                          : isSelected
+                          ? "bg-primary border-primary"
+                          : "border-gray-200 bg-gray-50"
                       }`}
                       style={{ width: "47%" }}
+                      disabled={isPastSlot}
                       onPress={() => setSelectedSlot({ start: slot.start, end: slot.end })}
                     >
-                      <Text className={`text-sm text-center ${isSelected ? "text-white font-semibold" : "text-gray-700"}`}>
+                      <Text
+                        className={`text-sm text-center ${
+                          isPastSlot
+                            ? "text-gray-400 line-through"
+                            : isSelected
+                            ? "text-white font-semibold"
+                            : "text-gray-700"
+                        }`}
+                      >
                         {slot.label}
                       </Text>
                     </TouchableOpacity>

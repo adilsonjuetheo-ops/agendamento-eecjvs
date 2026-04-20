@@ -2,9 +2,9 @@ import { Router, Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
-import { and, eq, gte, lte, isNull, isNotNull, count, sql } from "drizzle-orm";
+import { and, eq, gte, lte, isNull, count, sql, like } from "drizzle-orm";
 import { db } from "../db";
-import { reservations, teachers, specialDates } from "../db/schema";
+import { reservations, teachers, specialDates, SPECIAL_DATE_TYPES } from "../db/schema";
 import { adminAuthMiddleware, AdminRequest } from "../middleware/adminAuth";
 
 const router = Router();
@@ -269,11 +269,54 @@ router.get("/special-dates", adminAuthMiddleware, async (_req: AdminRequest, res
   res.json(all);
 });
 
+// POST /api/admin/special-dates/import — importação em lote (JSON array)
+router.post("/special-dates/import", adminAuthMiddleware, async (req: AdminRequest, res: Response) => {
+  const itemSchema = z.object({
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    type: z.enum(SPECIAL_DATE_TYPES),
+    label: z.string().min(1),
+  });
+  const schema = z.array(itemSchema).min(1).max(500);
+
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Dados inválidos", details: parsed.error.errors });
+    return;
+  }
+
+  const inserted = await db
+    .insert(specialDates)
+    .values(parsed.data)
+    .onConflictDoUpdate({
+      target: specialDates.date,
+      set: { type: sql`excluded.type`, label: sql`excluded.label` },
+    })
+    .returning();
+
+  res.json({ imported: inserted.length });
+});
+
+// DELETE /api/admin/special-dates/year/:year — remove todas as datas de um ano
+router.delete("/special-dates/year/:year", adminAuthMiddleware, async (req: AdminRequest, res: Response) => {
+  const year = parseInt(req.params.year);
+  if (isNaN(year) || year < 2020 || year > 2100) {
+    res.status(400).json({ error: "Ano inválido" });
+    return;
+  }
+
+  const deleted = await db
+    .delete(specialDates)
+    .where(like(specialDates.date, `${year}-%`))
+    .returning({ id: specialDates.id });
+
+  res.json({ deleted: deleted.length });
+});
+
 // POST /api/admin/special-dates
 router.post("/special-dates", adminAuthMiddleware, async (req: AdminRequest, res: Response) => {
   const schema = z.object({
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-    type: z.enum(["feriado", "recesso", "ferias", "sabado_letivo", "inicio_trimestre", "fim_trimestre"]),
+    type: z.enum(SPECIAL_DATE_TYPES),
     label: z.string().min(1),
   });
 

@@ -9,9 +9,10 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useFocusEffect } from "expo-router";
-import { format, parseISO, isPast } from "date-fns";
+import { format, parseISO, isPast, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { reservationsApi, Reservation } from "../../services/api";
+import { useAuthStore } from "../../store/authStore";
 
 const ROOM_COLORS: Record<string, string> = {
   "Sala de Informática": "#3b82f6",
@@ -20,7 +21,8 @@ const ROOM_COLORS: Record<string, string> = {
   "Biblioteca": "#ec4899",
 };
 
-export default function MyReservationsScreen() {
+export default function ReservationsScreen() {
+  const teacher = useAuthStore((s) => s.teacher);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -28,10 +30,10 @@ export default function MyReservationsScreen() {
 
   async function loadReservations() {
     try {
-      const { data } = await reservationsApi.getMy();
+      const { data } = await reservationsApi.getAll();
       setReservations(data);
     } catch {
-      Alert.alert("Erro", "Não foi possível carregar suas reservas");
+      Alert.alert("Erro", "Não foi possível carregar as reservas");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -76,12 +78,19 @@ export default function MyReservationsScreen() {
     );
   }
 
-  const upcoming = reservations.filter(
-    (r) => !r.status && !isPast(parseISO(r.startTime))
-  );
-  const past = reservations.filter(
-    (r) => r.status || isPast(parseISO(r.startTime))
-  );
+  // Upcoming = não cancelado e não no passado (todos os professores)
+  const upcoming = reservations
+    .filter((r) => !r.status && !isPast(parseISO(r.endTime)))
+    .sort((a, b) => parseISO(a.startTime).getTime() - parseISO(b.startTime).getTime());
+
+  // Histórico = somente as do professor logado que já passaram ou foram canceladas
+  const history = reservations
+    .filter(
+      (r) =>
+        r.teacherId === teacher?.id &&
+        (r.status === "cancelado" || isPast(parseISO(r.endTime)))
+    )
+    .sort((a, b) => parseISO(b.startTime).getTime() - parseISO(a.startTime).getTime());
 
   if (loading) {
     return (
@@ -93,8 +102,9 @@ export default function MyReservationsScreen() {
 
   function ReservationCard({ item }: { item: Reservation }) {
     const isCancelled = item.status === "cancelado";
-    const isPastReservation = isPast(parseISO(item.startTime));
-    const canCancel = !isCancelled && !isPastReservation;
+    const isPastReservation = isPast(parseISO(item.endTime));
+    const isOwn = item.teacherId === teacher?.id;
+    const canCancel = isOwn && !isCancelled && !isPastReservation;
 
     return (
       <View
@@ -113,6 +123,12 @@ export default function MyReservationsScreen() {
               {format(parseISO(item.startTime), "HH:mm")} –{" "}
               {format(parseISO(item.endTime), "HH:mm")}
             </Text>
+            <Text className="text-gray-400 text-xs mt-0.5">
+              {item.teacherName}
+              {isOwn && (
+                <Text className="text-blue-400"> (você)</Text>
+              )}
+            </Text>
           </View>
 
           <View className="items-end ml-3">
@@ -122,11 +138,15 @@ export default function MyReservationsScreen() {
               </View>
             ) : isPastReservation ? (
               <View className="bg-gray-100 rounded-full px-2 py-0.5">
-                <Text className="text-gray-500 text-xs">Concluído</Text>
+                <Text className="text-gray-500 text-xs font-semibold">Concluído</Text>
+              </View>
+            ) : isToday(parseISO(item.startTime)) ? (
+              <View className="bg-blue-100 rounded-full px-2 py-0.5">
+                <Text className="text-blue-700 text-xs font-semibold">Hoje</Text>
               </View>
             ) : (
               <View className="bg-green-100 rounded-full px-2 py-0.5">
-                <Text className="text-blue-700 text-xs font-semibold">Ativo</Text>
+                <Text className="text-green-700 text-xs font-semibold">Ativo</Text>
               </View>
             )}
 
@@ -149,35 +169,41 @@ export default function MyReservationsScreen() {
     );
   }
 
+  const listData: Array<Reservation | { sectionHeader: string }> = [
+    ...(upcoming.length > 0 ? [{ sectionHeader: "Hoje e Próximas" }] : []),
+    ...upcoming,
+    ...(history.length > 0 ? [{ sectionHeader: "Histórico (suas reservas)" }] : []),
+    ...history,
+  ];
+
   return (
     <View className="flex-1 bg-gray-50">
       <View className="bg-primary px-5 pt-14 pb-5">
-        <Text className="text-white text-xl font-bold">Minhas Reservas</Text>
+        <Text className="text-white text-xl font-bold">Reservas</Text>
         <Text className="text-blue-200 text-sm mt-0.5">
-          {upcoming.length} ativa{upcoming.length !== 1 ? "s" : ""}
+          {upcoming.length} reserva{upcoming.length !== 1 ? "s" : ""} ativa{upcoming.length !== 1 ? "s" : ""}
         </Text>
       </View>
 
       <FlatList
-        data={[...upcoming, ...past]}
-        keyExtractor={(item) => String(item.id)}
-        renderItem={({ item, index }) => (
-          <>
-            {index === 0 && upcoming.length > 0 && (
+        data={listData}
+        keyExtractor={(item, index) =>
+          "sectionHeader" in item ? `header-${index}` : String(item.id)
+        }
+        renderItem={({ item }) => {
+          if ("sectionHeader" in item) {
+            return (
               <Text className="text-gray-500 text-xs font-semibold uppercase px-4 pt-4 pb-2">
-                Próximas
+                {item.sectionHeader}
               </Text>
-            )}
-            {index === upcoming.length && past.length > 0 && (
-              <Text className="text-gray-500 text-xs font-semibold uppercase px-4 pt-4 pb-2">
-                Histórico
-              </Text>
-            )}
+            );
+          }
+          return (
             <View className="px-4">
               <ReservationCard item={item} />
             </View>
-          </>
-        )}
+          );
+        }}
         ListEmptyComponent={
           <View className="items-center py-20">
             <Text className="text-4xl mb-3">📅</Text>
@@ -185,7 +211,7 @@ export default function MyReservationsScreen() {
               Nenhuma reserva
             </Text>
             <Text className="text-gray-500 text-sm mt-1">
-              Suas reservas aparecerão aqui
+              As reservas aparecerão aqui
             </Text>
           </View>
         }

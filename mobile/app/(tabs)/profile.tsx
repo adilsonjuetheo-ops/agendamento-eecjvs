@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as SecureStore from "expo-secure-store";
-import { router } from "expo-router";
 import { useAuthStore } from "../../store/authStore";
 
 export default function ProfileScreen() {
@@ -47,7 +46,6 @@ export default function ProfileScreen() {
         onPress: async () => {
           setLoggingOut(true);
           await logout();
-          router.replace("/(auth)/login");
         },
       },
     ]);

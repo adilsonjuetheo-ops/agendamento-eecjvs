@@ -1,4 +1,5 @@
 import "dotenv/config";
+import path from "path";
 import express from "express";
 import cors from "cors";
 import authRoutes from "./routes/auth";
@@ -23,7 +24,14 @@ app.use("/api/reservations", reservationRoutes);
 app.use("/api/special-dates", specialDateRoutes);
 app.use("/api/admin", adminRoutes);
 
-// 404
+// Painel web admin (servido em /admin)
+const webDist = path.join(__dirname, "../../web/dist");
+app.use("/admin", express.static(webDist));
+app.get("/admin/*", (_req, res) => {
+  res.sendFile(path.join(webDist, "index.html"));
+});
+
+// 404 para rotas de API não encontradas
 app.use((_req, res) => {
   res.status(404).json({ error: "Rota não encontrada" });
 });

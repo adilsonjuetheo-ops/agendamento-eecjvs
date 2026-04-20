@@ -94,39 +94,36 @@ export const reservationsApi = {
     ),
 };
 
+export const SPECIAL_DATE_TYPES = [
+  "feriado",
+  "recesso",
+  "ferias",
+  "sabado_letivo",
+  "inicio_trimestre",
+  "fim_trimestre",
+  "conselho_classe",
+  "reuniao_pais",
+  "dia_letivo_especial",
+  "censo_escolar",
+] as const;
+
+export type SpecialDateType = (typeof SPECIAL_DATE_TYPES)[number];
+
+export const TYPE_CONFIG: Record<SpecialDateType, { label: string; color: string; icon: string; blocking: boolean }> = {
+  feriado:            { label: "Feriado Nacional",      color: "#ef4444", icon: "🔴", blocking: true  },
+  ferias:             { label: "Férias Escolares",       color: "#f97316", icon: "🏖️", blocking: true  },
+  recesso:            { label: "Recesso",                color: "#f59e0b", icon: "⏸️", blocking: false },
+  sabado_letivo:      { label: "Sábado Letivo",          color: "#3b82f6", icon: "📚", blocking: false },
+  inicio_trimestre:   { label: "Início do Trimestre",    color: "#10b981", icon: "🟢", blocking: false },
+  fim_trimestre:      { label: "Término do Trimestre",   color: "#6366f1", icon: "🔵", blocking: false },
+  conselho_classe:    { label: "Conselho de Classe",     color: "#8b5cf6", icon: "👥", blocking: false },
+  reuniao_pais:       { label: "Reunião de Pais",        color: "#ec4899", icon: "👨‍👩‍👧", blocking: false },
+  dia_letivo_especial:{ label: "Dia Letivo Especial",    color: "#14b8a6", icon: "⭐", blocking: false },
+  censo_escolar:      { label: "Censo Escolar",          color: "#64748b", icon: "📊", blocking: false },
+};
+
 // Datas especiais
 export const specialDatesApi = {
   getAll: () => api.get<SpecialDate[]>("/api/special-dates"),
 };
 
-// Admin
-export const adminApi = {
-  login: (email: string, password: string) =>
-    api.post<{ token: string; email: string }>("/api/admin/login", { email, password }),
-
-  getStats: () =>
-    api.get<{ today: number; week: number; month: number; total: number }>(
-      "/api/admin/stats"
-    ),
-
-  getReservations: (params?: {
-    room?: string;
-    startDate?: string;
-    endDate?: string;
-    status?: string;
-  }) => api.get<Reservation[]>("/api/admin/reservations", { params }),
-
-  updateReservation: (id: number, status: "cancelado" | null) =>
-    api.patch<Reservation>(`/api/admin/reservations/${id}`, { status }),
-
-  deleteReservation: (id: number) =>
-    api.delete(`/api/admin/reservations/${id}`),
-
-  getTeachers: () => api.get<Teacher[]>("/api/admin/teachers"),
-
-  getRoomsReport: () =>
-    api.get<{ room: string; count: number }[]>("/api/admin/reports/rooms"),
-
-  getTeachersReport: () =>
-    api.get<{ teacherName: string; count: number }[]>("/api/admin/reports/teachers"),
-};

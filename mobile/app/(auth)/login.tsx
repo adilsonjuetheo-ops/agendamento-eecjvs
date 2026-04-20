@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Image,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { Link, router } from "expo-router";
 import { useAuthStore } from "../../store/authStore";
 
@@ -48,8 +49,13 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="flex-1 bg-primary"
+      style={{ flex: 1 }}
     >
+      <LinearGradient
+        colors={["#0f172a", "#1e293b", "#1e3a6e"]}
+        locations={[0, 0.55, 1]}
+        style={{ flex: 1 }}
+      >
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
@@ -65,7 +71,7 @@ export default function LoginScreen() {
             <Text className="text-white text-2xl font-bold mt-4">
               Agendamento EECJVS
             </Text>
-            <Text className="text-blue-200 text-sm mt-1">
+            <Text className="text-slate-300 text-sm mt-1">
               E.E. Cel. José Venâncio de Souza
             </Text>
           </View>
@@ -129,16 +135,9 @@ export default function LoginScreen() {
             </View>
           </View>
 
-          {/* Link Admin */}
-          <Link href="/admin/login" asChild>
-            <TouchableOpacity className="mt-6 items-center">
-              <Text className="text-blue-200 text-xs">
-                Acesso Administrativo
-              </Text>
-            </TouchableOpacity>
-          </Link>
         </View>
       </ScrollView>
+      </LinearGradient>
     </KeyboardAvoidingView>
   );
 }

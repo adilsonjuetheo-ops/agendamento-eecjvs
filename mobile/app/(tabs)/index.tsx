@@ -10,7 +10,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { Calendar, DateData } from "react-native-calendars";
-import { format, parseISO, isToday, startOfWeek, endOfWeek } from "date-fns";
+import { format, parseISO, isToday, isPast, startOfWeek, endOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { router } from "expo-router";
 import { useFocusEffect } from "expo-router";
@@ -215,6 +215,22 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* Calendário Escolar */}
+        <TouchableOpacity
+          className="mx-4 mt-4 bg-white rounded-2xl p-4 shadow-sm flex-row items-center"
+          style={{ borderLeftWidth: 4, borderLeftColor: "#2563eb" }}
+          onPress={() => router.push("/school-calendar")}
+        >
+          <Text className="text-3xl mr-3">📅</Text>
+          <View className="flex-1">
+            <Text className="text-gray-800 font-bold text-sm">Calendário Escolar</Text>
+            <Text className="text-gray-500 text-xs mt-0.5">
+              Feriados, férias, trimestres e eventos
+            </Text>
+          </View>
+          <Text className="text-gray-400 text-lg">›</Text>
+        </TouchableOpacity>
+
         {/* Calendário */}
         <View className="mx-4 mt-4 bg-white rounded-2xl shadow-sm overflow-hidden">
           <Text className="text-gray-700 font-semibold text-sm px-4 pt-4 pb-2">Calendário de reservas</Text>
@@ -284,9 +300,17 @@ export default function HomeScreen() {
                     </Text>
                     <Text className="text-gray-400 text-xs">{r.subject}</Text>
                   </View>
-                  {r.status === "cancelado" && (
+                  {r.status === "cancelado" ? (
                     <View className="bg-red-100 rounded-full px-2 py-0.5">
-                      <Text className="text-red-600 text-xs">Cancelado</Text>
+                      <Text className="text-red-600 text-xs font-semibold">Cancelado</Text>
+                    </View>
+                  ) : isPast(parseISO(r.endTime)) ? (
+                    <View className="bg-gray-100 rounded-full px-2 py-0.5">
+                      <Text className="text-gray-500 text-xs font-semibold">Concluído</Text>
+                    </View>
+                  ) : (
+                    <View className="bg-green-100 rounded-full px-2 py-0.5">
+                      <Text className="text-green-700 text-xs font-semibold">Ativo</Text>
                     </View>
                   )}
                 </View>

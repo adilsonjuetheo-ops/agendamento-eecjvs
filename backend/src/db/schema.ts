@@ -16,6 +16,10 @@ export const SPECIAL_DATE_TYPES = [
   "sabado_letivo",
   "inicio_trimestre",
   "fim_trimestre",
+  "conselho_classe",
+  "reuniao_pais",
+  "dia_letivo_especial",
+  "censo_escolar",
 ] as const;
 
 export type SpecialDateType = (typeof SPECIAL_DATE_TYPES)[number];
