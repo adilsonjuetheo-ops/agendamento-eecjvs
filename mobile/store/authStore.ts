@@ -7,6 +7,9 @@ interface AuthState {
   teacher: Teacher | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  pendingGoogleToken: string | null;
+  pendingGoogleName: string | null;
+  pendingGoogleEmail: string | null;
 
   login: (email: string, password: string) => Promise<void>;
   register: (data: {
@@ -16,7 +19,10 @@ interface AuthState {
     matricula: string;
     subjects: string;
   }) => Promise<void>;
+  loginWithGoogle: (accessToken: string) => Promise<{ requiresRegistration: boolean }>;
+  completeGoogleRegistration: (matricula: string, subjects: string) => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   loadStoredAuth: () => Promise<void>;
   refreshMe: () => Promise<void>;
 }
@@ -26,6 +32,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   teacher: null,
   isLoading: true,
   isAuthenticated: false,
+  pendingGoogleToken: null,
+  pendingGoogleName: null,
+  pendingGoogleEmail: null,
 
   login: async (email, password) => {
     const { data } = await authApi.login(email, password);
@@ -39,7 +48,48 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ token: res.token, teacher: res.teacher, isAuthenticated: true });
   },
 
+  loginWithGoogle: async (accessToken) => {
+    const { data } = await authApi.googleLogin(accessToken);
+    if ("requiresRegistration" in data && data.requiresRegistration) {
+      set({
+        pendingGoogleToken: accessToken,
+        pendingGoogleName: data.name,
+        pendingGoogleEmail: data.email,
+      });
+      return { requiresRegistration: true };
+    }
+    const res = data as { token: string; teacher: Teacher };
+    await SecureStore.setItemAsync("auth_token", res.token);
+    set({ token: res.token, teacher: res.teacher, isAuthenticated: true });
+    return { requiresRegistration: false };
+  },
+
+  completeGoogleRegistration: async (matricula, subjects) => {
+    const { pendingGoogleToken } = get();
+    if (!pendingGoogleToken) throw new Error("Sessão Google expirada");
+    const { data } = await authApi.googleComplete({
+      accessToken: pendingGoogleToken,
+      matricula,
+      subjects,
+    });
+    await SecureStore.setItemAsync("auth_token", data.token);
+    set({
+      token: data.token,
+      teacher: data.teacher,
+      isAuthenticated: true,
+      pendingGoogleToken: null,
+      pendingGoogleName: null,
+      pendingGoogleEmail: null,
+    });
+  },
+
   logout: async () => {
+    await SecureStore.deleteItemAsync("auth_token");
+    set({ token: null, teacher: null, isAuthenticated: false });
+  },
+
+  deleteAccount: async () => {
+    await authApi.deleteAccount();
     await SecureStore.deleteItemAsync("auth_token");
     set({ token: null, teacher: null, isAuthenticated: false });
   },

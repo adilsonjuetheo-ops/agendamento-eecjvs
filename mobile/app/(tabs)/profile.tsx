@@ -13,9 +13,10 @@ import * as SecureStore from "expo-secure-store";
 import { useAuthStore } from "../../store/authStore";
 
 export default function ProfileScreen() {
-  const { teacher, logout } = useAuthStore();
+  const { teacher, logout, deleteAccount } = useAuthStore();
   const [avatar, setAvatar] = useState<string | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   async function handlePickImage() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -35,6 +36,42 @@ export default function ProfileScreen() {
       setAvatar(result.assets[0].uri);
       await SecureStore.setItemAsync("avatar_uri", result.assets[0].uri);
     }
+  }
+
+  function handleDeleteAccount() {
+    Alert.alert(
+      "Excluir conta",
+      "Tem certeza que deseja excluir sua conta? Todos os seus dados serão removidos permanentemente.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Excluir",
+          style: "destructive",
+          onPress: () => {
+            Alert.alert(
+              "Confirmação final",
+              "Esta ação é irreversível. Sua conta e todos os agendamentos serão excluídos. Confirma?",
+              [
+                { text: "Cancelar", style: "cancel" },
+                {
+                  text: "Sim, excluir permanentemente",
+                  style: "destructive",
+                  onPress: async () => {
+                    setDeleting(true);
+                    try {
+                      await deleteAccount();
+                    } catch {
+                      setDeleting(false);
+                      Alert.alert("Erro", "Não foi possível excluir a conta. Tente novamente.");
+                    }
+                  },
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
   }
 
   async function handleLogout() {
@@ -113,14 +150,27 @@ export default function ProfileScreen() {
 
         {/* Logout */}
         <TouchableOpacity
-          className="bg-red-50 border border-red-200 rounded-xl py-4 items-center mb-10"
+          className="bg-red-50 border border-red-200 rounded-xl py-4 items-center mb-3"
           onPress={handleLogout}
-          disabled={loggingOut}
+          disabled={loggingOut || deleting}
         >
           {loggingOut ? (
             <ActivityIndicator color="#dc2626" />
           ) : (
             <Text className="text-red-600 font-semibold">Sair da conta</Text>
+          )}
+        </TouchableOpacity>
+
+        {/* Excluir conta */}
+        <TouchableOpacity
+          className="py-4 items-center mb-10"
+          onPress={handleDeleteAccount}
+          disabled={deleting || loggingOut}
+        >
+          {deleting ? (
+            <ActivityIndicator color="#9ca3af" size="small" />
+          ) : (
+            <Text className="text-gray-400 text-sm">Excluir minha conta</Text>
           )}
         </TouchableOpacity>
       </ScrollView>

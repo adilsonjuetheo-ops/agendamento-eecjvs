@@ -61,6 +61,16 @@ export const authApi = {
 
   me: () => api.get<Teacher>("/api/auth/me"),
 
+  googleLogin: (accessToken: string) =>
+    api.post<
+      { token: string; teacher: Teacher } | { requiresRegistration: true; name: string; email: string }
+    >("/api/auth/google", { accessToken }),
+
+  googleComplete: (data: { accessToken: string; matricula: string; subjects: string }) =>
+    api.post<{ token: string; teacher: Teacher }>("/api/auth/google/complete", data),
+
+  deleteAccount: () => api.delete("/api/auth/account"),
+
   resetPassword: (data: {
     matricula: string;
     newPassword: string;

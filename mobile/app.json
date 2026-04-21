@@ -25,6 +25,7 @@
         "backgroundColor": "#2563eb"
       },
       "package": "br.edu.eecjvs.agendamento",
+      "versionCode": 2,
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
@@ -41,6 +42,7 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
+      "expo-web-browser",
       [
         "expo-notifications",
         {
@@ -52,6 +54,13 @@
     "experiments": {
       "typedRoutes": true
     },
-    "scheme": "agendamento-eecjvs"
+    "scheme": "agendamento-eecjvs",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "42487ea5-0489-4d65-a43e-9daa7c9a3279"
+      }
+    },
+    "owner": "adilsoneju"
   }
 }

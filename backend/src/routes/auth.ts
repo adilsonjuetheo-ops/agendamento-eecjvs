@@ -145,6 +145,139 @@ router.get("/me", authMiddleware, async (req: AuthRequest, res: Response) => {
   res.json(teacher);
 });
 
+router.post("/google", async (req: Request, res: Response) => {
+  const { accessToken } = req.body;
+  if (!accessToken) {
+    res.status(400).json({ error: "Token Google não fornecido" });
+    return;
+  }
+
+  let googleUser: { email: string; name: string; sub: string };
+  try {
+    const resp = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!resp.ok) throw new Error("Token inválido");
+    googleUser = await resp.json() as { email: string; name: string; sub: string };
+  } catch {
+    res.status(401).json({ error: "Token Google inválido" });
+    return;
+  }
+
+  if (!INSTITUTIONAL_EMAIL.test(googleUser.email)) {
+    res.status(403).json({ error: "Apenas contas @educacao.mg.gov.br são aceitas" });
+    return;
+  }
+
+  const [teacher] = await db
+    .select()
+    .from(teachers)
+    .where(eq(teachers.email, googleUser.email))
+    .limit(1);
+
+  if (teacher) {
+    const token = jwt.sign(
+      { teacherId: teacher.id, email: teacher.email, role: "teacher" },
+      process.env.JWT_SECRET!,
+      { expiresIn: "7d" }
+    );
+    res.json({
+      token,
+      teacher: {
+        id: teacher.id,
+        name: teacher.name,
+        email: teacher.email,
+        matricula: teacher.matricula,
+        subjects: teacher.subjects,
+      },
+    });
+    return;
+  }
+
+  res.json({
+    requiresRegistration: true,
+    name: googleUser.name,
+    email: googleUser.email,
+  });
+});
+
+router.post("/google/complete", async (req: Request, res: Response) => {
+  const { accessToken, matricula, subjects } = req.body;
+  if (!accessToken || !matricula || !subjects) {
+    res.status(400).json({ error: "Dados incompletos" });
+    return;
+  }
+
+  let googleUser: { email: string; name: string };
+  try {
+    const resp = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!resp.ok) throw new Error("Token inválido");
+    googleUser = await resp.json() as { email: string; name: string };
+  } catch {
+    res.status(401).json({ error: "Token Google inválido" });
+    return;
+  }
+
+  if (!INSTITUTIONAL_EMAIL.test(googleUser.email)) {
+    res.status(403).json({ error: "Apenas contas @educacao.mg.gov.br são aceitas" });
+    return;
+  }
+
+  const existingMatricula = await db
+    .select({ id: teachers.id })
+    .from(teachers)
+    .where(eq(teachers.matricula, matricula.trim()))
+    .limit(1);
+
+  if (existingMatricula.length > 0) {
+    res.status(409).json({ error: "MASP já cadastrado" });
+    return;
+  }
+
+  const existingEmail = await db
+    .select({ id: teachers.id })
+    .from(teachers)
+    .where(eq(teachers.email, googleUser.email))
+    .limit(1);
+
+  if (existingEmail.length > 0) {
+    res.status(409).json({ error: "Email já cadastrado" });
+    return;
+  }
+
+  const [teacher] = await db
+    .insert(teachers)
+    .values({
+      name: googleUser.name,
+      email: googleUser.email,
+      passwordHash: "__GOOGLE_OAUTH__",
+      matricula: matricula.trim(),
+      subjects: subjects.trim(),
+    })
+    .returning({
+      id: teachers.id,
+      name: teachers.name,
+      email: teachers.email,
+      matricula: teachers.matricula,
+      subjects: teachers.subjects,
+    });
+
+  const token = jwt.sign(
+    { teacherId: teacher.id, email: teacher.email, role: "teacher" },
+    process.env.JWT_SECRET!,
+    { expiresIn: "7d" }
+  );
+
+  res.status(201).json({ token, teacher });
+});
+
+router.delete("/account", authMiddleware, async (req: AuthRequest, res: Response) => {
+  await db.delete(teachers).where(eq(teachers.id, req.teacherId!));
+  res.json({ message: "Conta excluída com sucesso" });
+});
+
 router.post("/logout", (_req: Request, res: Response) => {
   // JWT é stateless — cliente descarta o token
   res.json({ message: "Logout realizado com sucesso" });
