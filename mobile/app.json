@@ -14,9 +14,11 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "br.edu.eecjvs.agendamento",
+      "buildNumber": "4",
       "infoPlist": {
         "NSCameraUsageDescription": "Para foto de perfil",
-        "NSPhotoLibraryUsageDescription": "Para selecionar foto de perfil"
+        "NSPhotoLibraryUsageDescription": "Para selecionar foto de perfil",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
