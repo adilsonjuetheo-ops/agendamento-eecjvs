@@ -90,6 +90,55 @@ app.get("/privacy", (_req, res) => {
 </html>`);
 });
 
+// Página de suporte
+app.get("/support", (_req, res) => {
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.send(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Suporte — Agendamento EECJVS</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 800px; margin: 0 auto; padding: 24px 16px; color: #1e293b; line-height: 1.7; }
+    h1 { color: #1e3a6e; font-size: 1.6rem; margin-bottom: 4px; }
+    h2 { color: #1e3a6e; font-size: 1.1rem; margin-top: 32px; }
+    p, li { color: #475569; font-size: 0.95rem; }
+    .subtitle { color: #94a3b8; font-size: 0.85rem; margin-bottom: 32px; }
+    .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px 24px; margin-top: 24px; }
+    .card h2 { margin-top: 0; }
+    a { color: #2563eb; }
+    footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #e2e8f0; color: #94a3b8; font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <h1>Suporte</h1>
+  <p class="subtitle">Agendamento EECJVS — E.E. Coronel José Venâncio de Souza</p>
+
+  <p>Este aplicativo é de uso exclusivo dos professores da <strong>Escola Estadual Coronel José Venâncio de Souza</strong>, para agendamento de espaços escolares como Sala de Informática, Biblioteca, Laboratório de Ciências e Quadra Poliesportiva.</p>
+
+  <div class="card">
+    <h2>Problemas com acesso</h2>
+    <p>Caso não consiga fazer login, verifique se está usando seu e-mail institucional <strong>@educacao.mg.gov.br</strong>. Se esqueceu sua senha, utilize a opção <em>"Esqueci minha senha"</em> na tela de login informando seu MASP.</p>
+  </div>
+
+  <div class="card">
+    <h2>Problemas com agendamentos</h2>
+    <p>Se encontrar dificuldades para realizar ou cancelar um agendamento, entre em contato com a secretaria da escola.</p>
+  </div>
+
+  <div class="card">
+    <h2>Contato</h2>
+    <p><strong>E.E. Coronel José Venâncio de Souza</strong><br>
+    Minas Gerais, Brasil<br>
+    E-mail: <a href="mailto:${process.env.CONTACT_EMAIL || 'secretaria@eecjvs.mg.gov.br'}">${process.env.CONTACT_EMAIL || 'secretaria@eecjvs.mg.gov.br'}</a></p>
+  </div>
+
+  <footer>© ${new Date().getFullYear()} E.E. Coronel José Venâncio de Souza — Todos os direitos reservados</footer>
+</body>
+</html>`);
+});
+
 // Rotas
 app.use("/api/auth", authRoutes);
 app.use("/api/reservations", reservationRoutes);
