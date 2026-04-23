@@ -34,6 +34,24 @@ async function isDateBlocked(dateStr: string): Promise<boolean> {
   return BLOCKING_DATE_TYPES.includes(special.type as any);
 }
 
+async function ensureAuthorizedForCriticalAction(req: AuthRequest, res: Response): Promise<boolean> {
+  const [teacher] = await db
+    .select({ userRole: teachers.userRole })
+    .from(teachers)
+    .where(eq(teachers.id, req.teacherId!))
+    .limit(1);
+
+  if (!teacher || teacher.userRole !== "autorizado") {
+    res.status(403).json({
+      error: "Esta funcionalidade é exclusiva para usuários da instituição.",
+      code: "ROLE_FORBIDDEN",
+    });
+    return false;
+  }
+
+  return true;
+}
+
 // GET /api/reservations — todas as reservas ativas (para visualização de disponibilidade)
 router.get("/", authMiddleware, async (_req: AuthRequest, res: Response) => {
   const all = await db
@@ -104,6 +122,8 @@ router.get(
 
 // POST /api/reservations — criar reserva
 router.post("/", authMiddleware, async (req: AuthRequest, res: Response) => {
+  if (!(await ensureAuthorizedForCriticalAction(req, res))) return;
+
   const parsed = createSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.errors[0].message });
@@ -189,6 +209,8 @@ router.post("/", authMiddleware, async (req: AuthRequest, res: Response) => {
 
 // DELETE /api/reservations/:id — cancelar reserva
 router.delete("/:id", authMiddleware, async (req: AuthRequest, res: Response) => {
+  if (!(await ensureAuthorizedForCriticalAction(req, res))) return;
+
   const id = parseInt(req.params.id);
   if (isNaN(id)) {
     res.status(400).json({ error: "ID inválido" });

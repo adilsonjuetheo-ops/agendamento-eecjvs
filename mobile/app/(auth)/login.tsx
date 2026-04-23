@@ -16,7 +16,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Link, router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
+import Constants from "expo-constants";
 import { useAuthStore } from "../../store/authStore";
+import { AppleSignInButton } from "../../components/auth/AppleSignInButton";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -27,6 +29,7 @@ export default function LoginScreen() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const login = useAuthStore((s) => s.login);
   const loginWithGoogle = useAuthStore((s) => s.loginWithGoogle);
+  const isExpoGo = Constants.appOwnership === "expo";
 
   const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
   const [request, response, promptAsync] = Google.useAuthRequest({
@@ -34,17 +37,30 @@ export default function LoginScreen() {
     iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || webClientId,
     androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || webClientId,
     selectAccount: true,
+    scopes: ["profile", "email"],
+    responseType: "token",
   });
 
   useEffect(() => {
     if (response?.type === "success") {
-      const accessToken = response.authentication?.accessToken;
+      const accessToken =
+        response.authentication?.accessToken ||
+        ((response as any)?.params?.access_token as string | undefined);
       if (accessToken) {
         handleGoogleToken(accessToken);
+      } else {
+        setGoogleLoading(false);
+        Alert.alert(
+          "Erro",
+          "Não foi possível obter o token do Google no iPhone. Verifique a configuração OAuth iOS."
+        );
       }
     } else if (response?.type === "error") {
       setGoogleLoading(false);
-      Alert.alert("Erro", "Falha na autenticação com Google");
+      Alert.alert(
+        "Erro",
+        (response as any)?.error?.message || "Falha na autenticação com Google"
+      );
     } else if (response?.type === "dismiss") {
       setGoogleLoading(false);
     }
@@ -54,9 +70,9 @@ export default function LoginScreen() {
     try {
       const result = await loginWithGoogle(accessToken);
       if (result.requiresRegistration) {
-        router.replace("/(auth)/complete-google-profile");
+        router.replace("/complete-google-profile");
       } else {
-        router.replace("/(tabs)");
+        router.replace("/");
       }
     } catch (err: any) {
       Alert.alert(
@@ -69,8 +85,25 @@ export default function LoginScreen() {
   }
 
   async function handleGoogleLogin() {
-    setGoogleLoading(true);
-    await promptAsync();
+    try {
+      if (Platform.OS === "ios" && isExpoGo) {
+        Alert.alert(
+          "Google no Expo Go",
+          "No iPhone com Expo Go, o retorno do Google OAuth pode falhar. Use login por email aqui e teste Google em um build de desenvolvimento (EAS)."
+        );
+        return;
+      }
+      setGoogleLoading(true);
+      if (!request) {
+        setGoogleLoading(false);
+        Alert.alert("Erro", "Configuração do Google OAuth não carregada.");
+        return;
+      }
+      await promptAsync();
+    } catch {
+      setGoogleLoading(false);
+      Alert.alert("Erro", "Falha ao iniciar autenticação com Google");
+    }
   }
 
   async function handleLogin() {
@@ -79,15 +112,10 @@ export default function LoginScreen() {
       return;
     }
 
-    if (!email.endsWith("@educacao.mg.gov.br")) {
-      Alert.alert("Erro", "Use seu email institucional @educacao.mg.gov.br");
-      return;
-    }
-
     setLoading(true);
     try {
       await login(email.toLowerCase().trim(), password);
-      router.replace("/(tabs)");
+      router.replace("/");
     } catch (err: any) {
       Alert.alert(
         "Erro",
@@ -134,10 +162,10 @@ export default function LoginScreen() {
               Entrar
             </Text>
 
-            <Text className="text-gray-600 text-sm mb-1">Email institucional</Text>
+            <Text className="text-gray-600 text-sm mb-1">Email</Text>
             <TextInput
               className="border border-gray-300 rounded-lg px-4 py-3 mb-4 text-gray-800"
-              placeholder="usuario@educacao.mg.gov.br"
+              placeholder="seuemail@provedor.com"
               keyboardType="email-address"
               autoCapitalize="none"
               value={email}
@@ -153,7 +181,7 @@ export default function LoginScreen() {
               onChangeText={setPassword}
             />
 
-            <Link href="/(auth)/forgot-password" asChild>
+            <Link href="/forgot-password" asChild>
               <TouchableOpacity className="mb-6">
                 <Text className="text-primary text-sm text-right">
                   Esqueci minha senha
@@ -199,15 +227,21 @@ export default function LoginScreen() {
                     <Path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
                   </Svg>
                   <Text className="text-gray-700 font-medium text-sm">
-                    Entrar com Google institucional
+                    Entrar com Google
                   </Text>
                 </>
               )}
             </TouchableOpacity>
 
+            {Platform.OS === "ios" ? (
+              <View className="mb-4">
+                <AppleSignInButton />
+              </View>
+            ) : null}
+
             <View className="flex-row justify-center mt-2">
               <Text className="text-gray-600 text-sm">Não tem conta? </Text>
-              <Link href="/(auth)/register" asChild>
+              <Link href="/register" asChild>
                 <TouchableOpacity>
                   <Text className="text-primary text-sm font-semibold">
                     Cadastrar-se

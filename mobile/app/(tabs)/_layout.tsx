@@ -5,8 +5,10 @@ import { Redirect } from "expo-router";
 
 export default function TabsLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const userRole = useAuthStore((s) => s.teacher?.userRole);
+  const isAuthorized = userRole === "autorizado";
 
-  if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
+  if (!isAuthenticated) return <Redirect href="/login" />;
 
   return (
     <Tabs
@@ -34,6 +36,7 @@ export default function TabsLayout() {
         name="new-reservation"
         options={{
           title: "Agendar",
+          href: isAuthorized ? "/(tabs)/new-reservation" : null,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="add-circle" size={size} color={color} />
           ),

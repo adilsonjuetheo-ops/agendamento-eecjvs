@@ -111,6 +111,9 @@ export default function ProfileScreen() {
 
         <Text className="text-white text-xl font-bold mt-3">{teacher?.name}</Text>
         <Text className="text-blue-200 text-sm">{teacher?.email}</Text>
+        <Text className="text-blue-100 text-xs mt-1">
+          {teacher?.userRole === "autorizado" ? "Usuário da instituição" : "Visitante"}
+        </Text>
       </View>
 
       <ScrollView className="flex-1 p-4">
@@ -122,7 +125,8 @@ export default function ProfileScreen() {
 
           {[
             { label: "Nome completo", value: teacher?.name },
-            { label: "Email institucional", value: teacher?.email },
+            { label: "Email", value: teacher?.email },
+            { label: "Perfil de acesso", value: teacher?.userRole || "visitante" },
             { label: "MASP", value: teacher?.matricula },
             { label: "Disciplinas", value: teacher?.subjects },
           ].map(({ label, value }) => (

@@ -24,19 +24,10 @@ export default function CompleteGoogleProfileScreen() {
   const pendingEmail = useAuthStore((s) => s.pendingGoogleEmail);
 
   async function handleComplete() {
-    if (!matricula.trim()) {
-      Alert.alert("Erro", "Informe seu MASP");
-      return;
-    }
-    if (!subjects.trim()) {
-      Alert.alert("Erro", "Informe suas disciplinas");
-      return;
-    }
-
     setLoading(true);
     try {
-      await completeGoogleRegistration(matricula.trim(), subjects.trim());
-      router.replace("/(tabs)");
+      await completeGoogleRegistration(matricula, subjects);
+      router.replace("/");
     } catch (err: any) {
       Alert.alert(
         "Erro",
@@ -67,7 +58,7 @@ export default function CompleteGoogleProfileScreen() {
                 Complete seu cadastro
               </Text>
               <Text className="text-gray-500 text-sm mb-5">
-                Olá, {pendingName}! Precisamos de mais algumas informações para criar sua conta.
+                Olá, {pendingName}! Você pode adicionar dados institucionais agora ou depois no perfil.
               </Text>
 
               {pendingEmail && (
@@ -78,7 +69,7 @@ export default function CompleteGoogleProfileScreen() {
                 </View>
               )}
 
-              <Text className="text-gray-600 text-sm mb-1">MASP (matrícula)</Text>
+              <Text className="text-gray-600 text-sm mb-1">MASP (opcional)</Text>
               <TextInput
                 className="border border-gray-300 rounded-lg px-4 py-3 mb-4 text-gray-800"
                 placeholder="Ex: 1234567"
@@ -87,7 +78,7 @@ export default function CompleteGoogleProfileScreen() {
                 onChangeText={setMatricula}
               />
 
-              <Text className="text-gray-600 text-sm mb-1">Disciplinas</Text>
+              <Text className="text-gray-600 text-sm mb-1">Disciplinas (opcional)</Text>
               <TextInput
                 className="border border-gray-300 rounded-lg px-4 py-3 mb-6 text-gray-800"
                 placeholder="Ex: Matemática, Física"

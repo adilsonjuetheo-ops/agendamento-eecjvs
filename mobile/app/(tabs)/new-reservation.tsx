@@ -16,6 +16,7 @@ import { scheduleReservationReminder } from "../../hooks/useNotifications";
 import { format, isBefore, isToday, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { reservationsApi } from "../../services/api";
+import { useAuthStore } from "../../store/authStore";
 
 const ROOMS = [
   "Sala de Informática",
@@ -62,6 +63,7 @@ function buildDateTime(date: Date, time: string): Date {
 }
 
 export default function NewReservationScreen() {
+  const isAuthorized = useAuthStore((s) => s.teacher?.userRole === "autorizado");
   const [room, setRoom] = useState<string>("");
   const [subject, setSubject] = useState("");
   const [date, setDate] = useState<Date>(new Date());
@@ -99,6 +101,14 @@ export default function NewReservationScreen() {
   }
 
   async function handleSubmit() {
+    if (!isAuthorized) {
+      Alert.alert(
+        "Acesso restrito",
+        "Esta funcionalidade é exclusiva para usuários da instituição."
+      );
+      return;
+    }
+
     if (!room) { Alert.alert("Erro", "Selecione um espaço"); return; }
     if (!selectedSlot) { Alert.alert("Erro", "Selecione um horário"); return; }
     if (!subject.trim()) { Alert.alert("Erro", "Informe a disciplina / turma"); return; }
@@ -124,10 +134,45 @@ export default function NewReservationScreen() {
       ]);
     } catch (err: any) {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert("Erro", err?.response?.data?.error || "Erro ao criar reserva");
+      const isRoleDenied = err?.response?.status === 403;
+      Alert.alert(
+        isRoleDenied ? "Acesso restrito" : "Erro",
+        isRoleDenied
+          ? "Esta funcionalidade é exclusiva para usuários da instituição."
+          : err?.response?.data?.error || "Erro ao criar reserva"
+      );
     } finally {
       setLoading(false);
     }
+  }
+
+  if (!isAuthorized) {
+    return (
+      <View className="flex-1 bg-gray-50">
+        <View className="bg-primary px-5 pt-14 pb-5">
+          <TouchableOpacity onPress={() => router.back()} className="mb-2">
+            <Text className="text-blue-200 text-sm">← Voltar</Text>
+          </TouchableOpacity>
+          <Text className="text-white text-xl font-bold">Nova Reserva</Text>
+        </View>
+        <View className="flex-1 items-center justify-center px-6">
+          <View className="bg-white rounded-2xl p-6 w-full shadow-sm">
+            <Text className="text-gray-800 text-base font-semibold mb-2">
+              Ação indisponível
+            </Text>
+            <Text className="text-gray-600 text-sm mb-5">
+              Esta funcionalidade é exclusiva para usuários da instituição.
+            </Text>
+            <TouchableOpacity
+              className="bg-primary rounded-lg py-3 items-center"
+              onPress={() => router.back()}
+            >
+              <Text className="text-white font-semibold">Voltar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    );
   }
 
   return (

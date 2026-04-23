@@ -8,10 +8,20 @@ import {
   FlatList,
   ActivityIndicator,
   RefreshControl,
+  Alert,
 } from "react-native";
-import { Calendar, DateData } from "react-native-calendars";
+import { Calendar, DateData, LocaleConfig } from "react-native-calendars";
 import { format, parseISO, isToday, isPast, startOfWeek, endOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+LocaleConfig.locales["pt-br"] = {
+  monthNames: ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"],
+  monthNamesShort: ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"],
+  dayNames: ["Domingo","Segunda-feira","Terça-feira","Quarta-feira","Quinta-feira","Sexta-feira","Sábado"],
+  dayNamesShort: ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"],
+  today: "Hoje",
+};
+LocaleConfig.defaultLocale = "pt-br";
 import { router } from "expo-router";
 import { useFocusEffect } from "expo-router";
 import { useCallback } from "react";
@@ -35,6 +45,7 @@ const ROOM_ICONS: Record<string, string> = {
 
 export default function HomeScreen() {
   const teacher = useAuthStore((s) => s.teacher);
+  const isAuthorized = teacher?.userRole === "autorizado";
   const { reservations, specialDates, isOffline, loading, refresh } = useOfflineCache();
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [dayReservations, setDayReservations] = useState<any[]>([]);
@@ -129,6 +140,16 @@ export default function HomeScreen() {
   }
 
   const firstName = teacher?.name?.split(" ")[0] ?? "";
+  const restrictedMessage =
+    "Esta funcionalidade é exclusiva para usuários da instituição.";
+
+  function handleRestrictedAction() {
+    if (isAuthorized) {
+      router.push("/(tabs)/new-reservation");
+      return;
+    }
+    Alert.alert("Acesso restrito", restrictedMessage);
+  }
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -138,6 +159,9 @@ export default function HomeScreen() {
           <View>
             <Text className="text-green-200 text-sm">Olá,</Text>
             <Text className="text-white text-2xl font-bold">{firstName}</Text>
+            {!isAuthorized ? (
+              <Text className="text-amber-200 text-xs mt-1">Perfil visitante</Text>
+            ) : null}
           </View>
           <View className="items-end">
             {isOffline && (
@@ -206,7 +230,7 @@ export default function HomeScreen() {
                 key={room}
                 className="bg-white rounded-xl px-3 py-3 items-center shadow-sm"
                 style={{ width: "48%", borderTopWidth: 3, borderTopColor: ROOM_COLORS[room] }}
-                onPress={() => router.push("/(tabs)/new-reservation")}
+                onPress={handleRestrictedAction}
               >
                 <Text className="text-2xl mb-1">{icon}</Text>
                 <Text className="text-gray-700 text-xs text-center font-medium">{room}</Text>
@@ -279,7 +303,7 @@ export default function HomeScreen() {
               <Text className="text-gray-400 text-sm">Nenhuma reserva ainda</Text>
               <TouchableOpacity
                 className="mt-3 bg-primary rounded-lg px-5 py-2"
-                onPress={() => router.push("/(tabs)/new-reservation")}
+                onPress={handleRestrictedAction}
               >
                 <Text className="text-white text-sm font-semibold">Fazer agendamento</Text>
               </TouchableOpacity>
@@ -362,7 +386,7 @@ export default function HomeScreen() {
                   className="mt-4 bg-primary rounded-lg px-6 py-3"
                   onPress={() => {
                     setModalVisible(false);
-                    router.push("/(tabs)/new-reservation");
+                    handleRestrictedAction();
                   }}
                 >
                   <Text className="text-white font-semibold">Agendar</Text>

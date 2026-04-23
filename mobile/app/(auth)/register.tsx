@@ -32,13 +32,8 @@ export default function RegisterScreen() {
   async function handleRegister() {
     const { name, email, matricula, subjects, password, confirmPassword } = form;
 
-    if (!name || !email || !matricula || !subjects || !password) {
-      Alert.alert("Erro", "Preencha todos os campos");
-      return;
-    }
-
-    if (!email.endsWith("@educacao.mg.gov.br")) {
-      Alert.alert("Erro", "Use seu email institucional @educacao.mg.gov.br");
+    if (!name || !email || !password) {
+      Alert.alert("Erro", "Preencha nome, email e senha");
       return;
     }
 
@@ -54,8 +49,14 @@ export default function RegisterScreen() {
 
     setLoading(true);
     try {
-      await register({ name, email: email.toLowerCase().trim(), matricula, subjects, password });
-      router.replace("/(tabs)");
+      await register({
+        name: name.trim(),
+        email: email.toLowerCase().trim(),
+        matricula: matricula.trim() || undefined,
+        subjects: subjects.trim() || undefined,
+        password,
+      });
+      router.replace("/");
     } catch (err: any) {
       Alert.alert("Erro", err?.response?.data?.error || "Erro ao cadastrar");
     } finally {
@@ -80,16 +81,16 @@ export default function RegisterScreen() {
 
           <Text className="text-white text-2xl font-bold mb-2">Cadastro</Text>
           <Text className="text-blue-200 text-sm mb-6">
-            Crie sua conta com email institucional
+            Crie sua conta para acessar o aplicativo
           </Text>
 
           {/* Form */}
           <View className="bg-white rounded-2xl p-6 shadow-lg">
             {[
               { label: "Nome completo", field: "name", placeholder: "Seu nome", type: "default" },
-              { label: "Email institucional", field: "email", placeholder: "usuario@educacao.mg.gov.br", type: "email-address" },
-              { label: "MASP (Matrícula)", field: "matricula", placeholder: "Seu número de matrícula", type: "default" },
-              { label: "Disciplinas", field: "subjects", placeholder: "Ex: Matemática, Física", type: "default" },
+              { label: "Email", field: "email", placeholder: "seuemail@provedor.com", type: "email-address" },
+              { label: "MASP (opcional)", field: "matricula", placeholder: "Seu número de matrícula", type: "default" },
+              { label: "Disciplinas (opcional)", field: "subjects", placeholder: "Ex: Matemática, Física", type: "default" },
             ].map(({ label, field, placeholder, type }) => (
               <View key={field} className="mb-4">
                 <Text className="text-gray-600 text-sm mb-1">{label}</Text>

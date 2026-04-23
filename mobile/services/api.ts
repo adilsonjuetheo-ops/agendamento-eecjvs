@@ -2,6 +2,15 @@ import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
+const AUTHORIZED_EMAIL_DOMAINS = (
+  process.env.EXPO_PUBLIC_AUTHORIZED_EMAIL_DOMAINS ||
+  process.env.EXPO_PUBLIC_AUTHORIZED_EMAIL_DOMAIN ||
+  "@educacao.mg.gov.br,@escola.com"
+)
+  .split(",")
+  .map((domain) => domain.trim().toLowerCase())
+  .filter(Boolean)
+  .map((domain) => (domain.startsWith("@") ? domain : `@${domain}`));
 
 export const api = axios.create({
   baseURL: BASE_URL,
@@ -18,14 +27,57 @@ api.interceptors.request.use(async (config) => {
 });
 
 // Tipos de resposta
+export type UserRole = "autorizado" | "visitante";
+
 export interface Teacher {
   id: number;
   name: string;
   email: string;
-  matricula: string;
-  subjects: string;
+  userRole: UserRole;
+  matricula?: string | null;
+  subjects?: string | null;
   createdAt: string;
 }
+
+interface ApiTeacher {
+  id: number;
+  name: string;
+  email: string;
+  userRole?: UserRole | null;
+  matricula?: string | null;
+  subjects?: string | null;
+  createdAt: string;
+}
+
+function normalizeEmail(email?: string | null): string {
+  return (email || "").trim().toLowerCase();
+}
+
+export function deriveUserRole(email?: string | null): UserRole {
+  const normalizedEmail = normalizeEmail(email);
+  if (!normalizedEmail) return "visitante";
+  if (normalizedEmail.endsWith("privaterelay.appleid.com")) return "visitante";
+  return AUTHORIZED_EMAIL_DOMAINS.some((domain) => normalizedEmail.endsWith(domain))
+    ? "autorizado"
+    : "visitante";
+}
+
+function normalizeTeacher(teacher: ApiTeacher): Teacher {
+  const email = normalizeEmail(teacher.email);
+  const derivedRole = deriveUserRole(email);
+  const backendRole = teacher.userRole === "autorizado" ? "autorizado" : "visitante";
+  return {
+    ...teacher,
+    email,
+    userRole: derivedRole === "autorizado" || backendRole === "autorizado"
+      ? "autorizado"
+      : "visitante",
+    matricula: teacher.matricula ?? null,
+    subjects: teacher.subjects ?? null,
+  };
+}
+
+type AuthPayload = { token: string; teacher: ApiTeacher };
 
 export interface Reservation {
   id: number;
@@ -49,25 +101,77 @@ export interface SpecialDate {
 // Auth
 export const authApi = {
   login: (email: string, password: string) =>
-    api.post<{ token: string; teacher: Teacher }>("/api/auth/login", { email, password }),
+    api
+      .post<AuthPayload>("/api/auth/login", { email, password })
+      .then((res) => ({
+        ...res,
+        data: {
+          ...res.data,
+          teacher: normalizeTeacher(res.data.teacher),
+        },
+      })),
 
   register: (data: {
     name: string;
     email: string;
     password: string;
-    matricula: string;
-    subjects: string;
-  }) => api.post<{ token: string; teacher: Teacher }>("/api/auth/register", data),
+    matricula?: string;
+    subjects?: string;
+  }) =>
+    api.post<AuthPayload>("/api/auth/register", data).then((res) => ({
+      ...res,
+      data: {
+        ...res.data,
+        teacher: normalizeTeacher(res.data.teacher),
+      },
+    })),
 
-  me: () => api.get<Teacher>("/api/auth/me"),
+  me: () =>
+    api.get<ApiTeacher>("/api/auth/me").then((res) => ({
+      ...res,
+      data: normalizeTeacher(res.data),
+    })),
 
   googleLogin: (accessToken: string) =>
-    api.post<
-      { token: string; teacher: Teacher } | { requiresRegistration: true; name: string; email: string }
-    >("/api/auth/google", { accessToken }),
+    api
+      .post<AuthPayload | { requiresRegistration: true; name: string; email?: string | null }>(
+        "/api/auth/google",
+        { accessToken }
+      )
+      .then((res) => {
+        const payload = res.data;
+        if ("requiresRegistration" in payload) return res;
+        return {
+          ...res,
+          data: {
+            ...payload,
+            teacher: normalizeTeacher(payload.teacher),
+          },
+        };
+      }),
 
-  googleComplete: (data: { accessToken: string; matricula: string; subjects: string }) =>
-    api.post<{ token: string; teacher: Teacher }>("/api/auth/google/complete", data),
+  googleComplete: (data: { accessToken: string; matricula?: string; subjects?: string }) =>
+    api.post<AuthPayload>("/api/auth/google/complete", data).then((res) => ({
+      ...res,
+      data: {
+        ...res.data,
+        teacher: normalizeTeacher(res.data.teacher),
+      },
+    })),
+
+  appleLogin: (data: {
+    identityToken: string;
+    authorizationCode?: string;
+    fullName?: string | null;
+    email?: string | null;
+  }) =>
+    api.post<AuthPayload>("/api/auth/apple", data).then((res) => ({
+      ...res,
+      data: {
+        ...res.data,
+        teacher: normalizeTeacher(res.data.teacher),
+      },
+    })),
 
   deleteAccount: () => api.delete("/api/auth/account"),
 
@@ -136,4 +240,3 @@ export const TYPE_CONFIG: Record<SpecialDateType, { label: string; color: string
 export const specialDatesApi = {
   getAll: () => api.get<SpecialDate[]>("/api/special-dates"),
 };
-

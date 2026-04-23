@@ -39,7 +39,7 @@ export default function ForgotPasswordScreen() {
     try {
       await authApi.resetPassword({ matricula, newPassword, confirmPassword });
       Alert.alert("Sucesso", "Senha redefinida com sucesso!", [
-        { text: "OK", onPress: () => router.replace("/(auth)/login") },
+        { text: "OK", onPress: () => router.replace("/login") },
       ]);
     } catch (err: any) {
       Alert.alert("Erro", err?.response?.data?.error || "MASP não encontrado");

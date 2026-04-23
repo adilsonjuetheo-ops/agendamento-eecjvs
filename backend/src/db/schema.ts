@@ -31,6 +31,8 @@ export const teachers = pgTable("teachers", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
+  appleSub: text("apple_sub").unique(),
+  userRole: text("user_role").notNull().default("visitante"),
   passwordHash: text("password_hash").notNull(),
   matricula: text("matricula").notNull().unique(),
   subjects: text("subjects").notNull(),

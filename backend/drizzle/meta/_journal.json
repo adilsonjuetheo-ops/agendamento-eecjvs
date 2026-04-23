@@ -8,6 +8,13 @@
       "when": 1776559740206,
       "tag": "0000_right_thunderbolts",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1776945000000,
+      "tag": "0001_apple_login_and_user_role",
+      "breakpoints": true
     }
   ]
 }

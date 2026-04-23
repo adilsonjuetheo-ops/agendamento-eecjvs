@@ -16,11 +16,17 @@ interface AuthState {
     name: string;
     email: string;
     password: string;
-    matricula: string;
-    subjects: string;
+    matricula?: string;
+    subjects?: string;
   }) => Promise<void>;
   loginWithGoogle: (accessToken: string) => Promise<{ requiresRegistration: boolean }>;
-  completeGoogleRegistration: (matricula: string, subjects: string) => Promise<void>;
+  loginWithApple: (data: {
+    identityToken: string;
+    authorizationCode?: string;
+    fullName?: string | null;
+    email?: string | null;
+  }) => Promise<void>;
+  completeGoogleRegistration: (matricula?: string, subjects?: string) => Promise<void>;
   logout: () => Promise<void>;
   deleteAccount: () => Promise<void>;
   loadStoredAuth: () => Promise<void>;
@@ -64,13 +70,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     return { requiresRegistration: false };
   },
 
+  loginWithApple: async (payload) => {
+    const { data } = await authApi.appleLogin(payload);
+    await SecureStore.setItemAsync("auth_token", data.token);
+    set({ token: data.token, teacher: data.teacher, isAuthenticated: true });
+  },
+
   completeGoogleRegistration: async (matricula, subjects) => {
     const { pendingGoogleToken } = get();
     if (!pendingGoogleToken) throw new Error("Sessão Google expirada");
     const { data } = await authApi.googleComplete({
       accessToken: pendingGoogleToken,
-      matricula,
-      subjects,
+      matricula: matricula?.trim() || undefined,
+      subjects: subjects?.trim() || undefined,
     });
     await SecureStore.setItemAsync("auth_token", data.token);
     set({
@@ -115,4 +127,3 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ teacher: data });
   },
 }));
-

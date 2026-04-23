@@ -15,6 +15,7 @@
       "supportsTablet": false,
       "bundleIdentifier": "br.edu.eecjvs.agendamento",
       "buildNumber": "5",
+      "usesAppleSignIn": true,
       "infoPlist": {
         "NSCameraUsageDescription": "Para foto de perfil",
         "NSPhotoLibraryUsageDescription": "Para selecionar foto de perfil",
@@ -44,6 +45,7 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
+      "expo-apple-authentication",
       "expo-web-browser",
       [
         "expo-notifications",
@@ -53,6 +55,12 @@
         }
       ]
     ],
+    "updates": {
+      "url": "https://u.expo.dev/42487ea5-0489-4d65-a43e-9daa7c9a3279"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "experiments": {
       "typedRoutes": true
     },

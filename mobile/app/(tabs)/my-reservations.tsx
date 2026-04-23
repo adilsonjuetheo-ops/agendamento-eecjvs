@@ -23,6 +23,7 @@ const ROOM_COLORS: Record<string, string> = {
 
 export default function ReservationsScreen() {
   const teacher = useAuthStore((s) => s.teacher);
+  const isAuthorized = teacher?.userRole === "autorizado";
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -65,9 +66,12 @@ export default function ReservationsScreen() {
                 )
               );
             } catch (err: any) {
+              const isRoleDenied = err?.response?.status === 403;
               Alert.alert(
-                "Erro",
-                err?.response?.data?.error || "Erro ao cancelar"
+                isRoleDenied ? "Acesso restrito" : "Erro",
+                isRoleDenied
+                  ? "Esta funcionalidade é exclusiva para usuários da instituição."
+                  : err?.response?.data?.error || "Erro ao cancelar"
               );
             } finally {
               setCancellingId(null);
@@ -104,7 +108,7 @@ export default function ReservationsScreen() {
     const isCancelled = item.status === "cancelado";
     const isPastReservation = isPast(parseISO(item.endTime));
     const isOwn = item.teacherId === teacher?.id;
-    const canCancel = isOwn && !isCancelled && !isPastReservation;
+    const canCancel = isAuthorized && isOwn && !isCancelled && !isPastReservation;
 
     return (
       <View
