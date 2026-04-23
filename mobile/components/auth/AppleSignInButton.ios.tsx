@@ -30,8 +30,8 @@ export function AppleSignInButton() {
       await loginWithApple({
         identityToken: credential.identityToken,
         authorizationCode: credential.authorizationCode || undefined,
-        email: credential.email || null,
-        fullName: fullName || null,
+        email: credential.email || undefined,
+        fullName: fullName || undefined,
       });
 
       router.replace("/");

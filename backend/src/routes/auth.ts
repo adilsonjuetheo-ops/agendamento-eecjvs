@@ -41,9 +41,9 @@ const resetSchema = z.object({
 
 const appleLoginSchema = z.object({
   identityToken: z.string().min(10),
-  authorizationCode: z.string().optional(),
-  fullName: z.string().trim().optional(),
-  email: z.string().email().optional(),
+  authorizationCode: z.string().nullable().optional(),
+  fullName: z.string().trim().nullable().optional(),
+  email: z.string().email().nullable().optional(),
 });
 
 function normalizeEmail(email?: string | null): string {
