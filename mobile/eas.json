@@ -22,7 +22,7 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://agendamento-eecjvs-production.up.railway.app",
         "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "498709301119-0538iiv3tcehsgg1lbdjavf0t0gese4c.apps.googleusercontent.com",
-        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "498709301119-tnntv01l799dql5r5u0k3c64qqm5qa4e.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "498709301119-eks1ic6md08va9bn43jq495jjqv5n7sk.apps.googleusercontent.com",
         "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "498709301119-5oquf9jt3in3tk87tsfhthcjsnjt1k84.apps.googleusercontent.com"
       }
     }
