@@ -32,10 +32,15 @@ export default function LoginScreen() {
   const isExpoGo = Constants.appOwnership === "expo";
 
   const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+  const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || webClientId;
+  const androidClientId =
+    process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || webClientId;
+
   const [request, response, promptAsync] = Google.useAuthRequest({
+    clientId: webClientId || "",
     webClientId,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || webClientId,
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || webClientId,
+    iosClientId: isExpoGo ? undefined : iosClientId,
+    androidClientId: isExpoGo ? undefined : androidClientId,
     selectAccount: true,
     scopes: ["profile", "email"],
     responseType: "token",

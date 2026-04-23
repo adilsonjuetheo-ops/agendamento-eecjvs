@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
+import Constants from "expo-constants";
 import { Platform } from "react-native";
 import { Reservation } from "../services/api";
 
@@ -16,6 +17,7 @@ Notifications.setNotificationHandler({
 
 export async function registerForPushNotificationsAsync(): Promise<string | null> {
   if (!Device.isDevice) return null;
+  if (Platform.OS === "android" && Constants.appOwnership === "expo") return null;
 
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   let finalStatus = existingStatus;
