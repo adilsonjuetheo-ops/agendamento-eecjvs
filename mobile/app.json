@@ -27,7 +27,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#2563eb"
       },
-      "package": "br.edu.eecjvs.agendamento",
+      "package": "app.replit.school_lab_book.twa",
       "versionCode": 3,
       "permissions": [
         "CAMERA",
